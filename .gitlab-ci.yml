@@ -1,0 +1,42 @@
+default:
+  tags: [cicd, cat, grep]
+
+stages:
+  - build
+  - style_test
+  - func_test
+  - deploy
+
+building:
+  stage: build
+  script:
+    - cd src/cat
+    - make s21_cat
+    - cd ../grep
+    - make s21_grep
+  artifacts:
+    paths:
+      - src/cat/s21_cat
+      - src/grep/s21_grep
+    expire_in: 30 days
+
+style_testing:
+  stage: style_test
+  script:
+    - cp materials/linters/.clang-format src/
+    - clang-format -n -Werror src/*/*.c src/*/*.h
+
+func_testing:
+  stage: func_test
+  script:
+    - cd src/cat
+    - make tests
+    - cd ../grep
+    - make tests
+  when: on_success
+
+deploying:
+  stage: deploy
+  script:
+    - bash src/deploy.sh
+  when: manual
